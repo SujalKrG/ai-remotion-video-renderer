@@ -88,16 +88,17 @@ COPY src/ ./src/
 # Fail fast if there are type errors
 RUN npx tsc --noEmit && npx tsc
 
-# Download Chrome at build time so it's baked into the image
-RUN node dist/download-chrome.js
-
-# Locate the binary (path varies by Chrome for Testing version: chrome-linux vs chrome-linux64)
-# and create a stable symlink so PUPPETEER_EXECUTABLE_PATH never needs updating
-RUN CHROME_BIN=$(find /var/task/.chrome -name "chrome" -type f | head -1) && \
-    test -n "$CHROME_BIN" || (echo "ERROR: Chrome binary not found" && exit 1) && \
+# Download Chrome at build time, then relocate to a stable known path.
+# Remotion downloads to its own internal cache (not CHROME_DIR), so we
+# search broadly after the download completes.
+RUN node dist/download-chrome.js && \
+    CHROME_BIN=$(find / -name "chrome" -type f \
+      -not -path "*/proc/*" -not -path "*/sys/*" 2>/dev/null | head -1) && \
+    test -n "$CHROME_BIN" || (echo "ERROR: Chrome binary not found anywhere" && exit 1) && \
     echo "Chrome found at: $CHROME_BIN" && \
     mkdir -p /var/task/.chrome/bin && \
-    ln -sf "$CHROME_BIN" /var/task/.chrome/bin/chrome
+    cp "$CHROME_BIN" /var/task/.chrome/bin/chrome && \
+    chmod +x /var/task/.chrome/bin/chrome
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Stage 4: Production Runtime
