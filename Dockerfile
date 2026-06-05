@@ -47,31 +47,15 @@ FROM base-deps AS fonts
 # Install comprehensive font sets for video rendering
 # These fonts are cached in this layer and won't rebuild unless Dockerfile changes
 RUN dnf install -y \
-    # Base fonts (Latin, common scripts)
-    xorg-x11-fonts-Type1 \
-    xorg-x11-fonts-misc \
+    # Base fonts (Latin, common scripts) — AL2023 compatible
     dejavu-sans-fonts \
     dejavu-serif-fonts \
     dejavu-sans-mono-fonts \
     liberation-fonts \
-    liberation-mono-fonts \
-    liberation-narrow-fonts \
-    liberation-sans-fonts \
-    liberation-serif-fonts \
-    # International fonts
-    google-noto-fonts-common \
-    google-noto-sans-fonts \
-    google-noto-serif-fonts \
-    google-noto-sans-devanagari-fonts \
-    google-noto-sans-arabic-fonts \
-    google-noto-sans-cjk-ttc-fonts \
-    # Emoji support
-    google-noto-emoji-fonts \
-    # Additional professional fonts
-    gnu-free-fonts-common \
-    gnu-free-mono-fonts \
-    gnu-free-sans-fonts \
-    gnu-free-serif-fonts \
+    # International + emoji fonts — AL2023 package names
+    google-noto-sans-vf-fonts \
+    google-noto-serif-vf-fonts \
+    google-noto-color-emoji-fonts \
     && dnf clean all \
     && rm -rf /var/cache/dnf
 
