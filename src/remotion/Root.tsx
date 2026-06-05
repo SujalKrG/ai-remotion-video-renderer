@@ -1,7 +1,5 @@
 import React from "react";
 import { Composition } from "remotion";
-// @ts-ignore — registers Great Vibes, Dancing Script, Playfair Display from S3
-import "@evatrilvideo/ai-video-package/src/fonts";
 import { MergeComposition } from "../compositions/MergeComposition.js";
 import { StaticSlot } from "../compositions/StaticSlot.js";
 

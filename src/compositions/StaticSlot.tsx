@@ -1,7 +1,9 @@
-import React from "react";
-import { AbsoluteFill } from "remotion";
-// @ts-ignore — ESM package, uses exportsFields: [] override in webpack
-import { frameRegistry } from "@evatrilvideo/ai-video-package";
+import React, { useEffect, useState } from "react";
+import { AbsoluteFill, delayRender, continueRender } from "remotion";
+// @ts-ignore — direct subpath avoids remotionRoot.jsx which calls registerRoot as a side effect
+import { frameRegistry } from "@evatrilvideo/ai-video-package/src/frameRegistry.js";
+// @ts-ignore
+import { registerFonts } from "@evatrilvideo/ai-video-package/src/fonts/registerFonts.js";
 
 export interface StaticSlotProps {
   component_name: string;
@@ -12,17 +14,22 @@ export interface StaticSlotProps {
   fps?: number;
 }
 
-// Build a name→component lookup from the registry at module load time
-const componentByName: Record<string, React.ComponentType<any>> = {};
-if (frameRegistry && typeof frameRegistry === "object") {
-  for (const entry of Object.values(frameRegistry) as any[]) {
+/** Builds a name→component map from a frameRegistry object. Exported for testing. */
+export function buildComponentRegistry(
+  registry: Record<string, any>,
+): Record<string, React.ComponentType<any>> {
+  const map: Record<string, React.ComponentType<any>> = {};
+  if (!registry || typeof registry !== "object") return map;
+  for (const entry of Object.values(registry) as any[]) {
     if (entry?.component) {
-      const name: string | undefined =
-        entry.component.displayName || entry.component.name;
-      if (name) componentByName[name] = entry.component;
+      const name: string | undefined = entry.component.displayName || entry.component.name;
+      if (name) map[name] = entry.component;
     }
   }
+  return map;
 }
+
+const componentByName = buildComponentRegistry(frameRegistry);
 
 export const StaticSlot: React.FC<StaticSlotProps> = ({
   component_name,
@@ -31,10 +38,15 @@ export const StaticSlot: React.FC<StaticSlotProps> = ({
   duration_seconds,
   purpose,
 }) => {
+  const [fontHandle] = useState(() => delayRender("Loading fonts"));
+
+  useEffect(() => {
+    registerFonts().finally(() => continueRender(fontHandle));
+  }, [fontHandle]);
+
   const FrameComponent = componentByName[component_name];
 
   if (!FrameComponent) {
-    // Fallback: black frame with centered label — never fails the render
     return (
       <AbsoluteFill
         style={{

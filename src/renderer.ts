@@ -64,7 +64,6 @@ const getBundleLocation = async (): Promise<string> => {
   }
   cachedBundleLocation = null;
 
-  // Entry: our unified root — registers both Video (package) + MergeComposition
   const entryPoint = path.resolve(__dirname, "../src/remotion/index.ts");
 
   // Compute the package src dir so the webpack JSX rule override knows what to whitelist
