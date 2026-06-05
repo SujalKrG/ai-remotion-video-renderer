@@ -128,6 +128,10 @@ COPY --from=builder /var/task/.chrome ./.chrome
 RUN test -x /var/task/.chrome/bin/chrome || \
     (echo "ERROR: Chrome binary not executable" && exit 1)
 
+# Pre-chmod Remotion's compositor binary — Lambda's /var/task is read-only at runtime
+# so Remotion can't chmod it itself
+RUN find /var/task/node_modules/@remotion -name "remotion" -type f -exec chmod +x {} \;
+
 ENV PUPPETEER_EXECUTABLE_PATH=/var/task/.chrome/bin/chrome
 
 # Lambda writable paths configuration
