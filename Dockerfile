@@ -88,17 +88,16 @@ COPY src/ ./src/
 # Fail fast if there are type errors
 RUN npx tsc --noEmit && npx tsc
 
-# Download Chrome at build time, then relocate to a stable known path.
-# Remotion downloads to its own internal cache (not CHROME_DIR), so we
-# search broadly after the download completes.
+# Download Chrome at build time, then copy the entire chrome directory to a
+# stable known path. Chrome needs icudtl.dat and other sibling files — copying
+# only the binary breaks ICU data loading.
 RUN node dist/download-chrome.js && \
     CHROME_BIN=$(find / -name "chrome" -type f \
       -not -path "*/proc/*" -not -path "*/sys/*" 2>/dev/null | head -1) && \
     test -n "$CHROME_BIN" || (echo "ERROR: Chrome binary not found anywhere" && exit 1) && \
     echo "Chrome found at: $CHROME_BIN" && \
-    mkdir -p /var/task/.chrome/bin && \
-    cp "$CHROME_BIN" /var/task/.chrome/bin/chrome && \
-    chmod +x /var/task/.chrome/bin/chrome
+    cp -r "$(dirname "$CHROME_BIN")" /var/task/.chrome/chrome-dir && \
+    chmod +x /var/task/.chrome/chrome-dir/chrome
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Stage 4: Production Runtime
@@ -124,15 +123,15 @@ COPY src/ ./src/
 # Copy downloaded Chrome from builder (cached layer)
 COPY --from=builder /var/task/.chrome ./.chrome
 
-# Verify Chrome symlink from builder stage is present and executable
-RUN test -x /var/task/.chrome/bin/chrome || \
+# Verify Chrome binary is present and executable
+RUN test -x /var/task/.chrome/chrome-dir/chrome || \
     (echo "ERROR: Chrome binary not executable" && exit 1)
 
 # Pre-chmod Remotion's compositor binary — Lambda's /var/task is read-only at runtime
 # so Remotion can't chmod it itself
 RUN find /var/task/node_modules/@remotion -name "remotion" -type f -exec chmod +x {} \;
 
-ENV PUPPETEER_EXECUTABLE_PATH=/var/task/.chrome/bin/chrome
+ENV PUPPETEER_EXECUTABLE_PATH=/var/task/.chrome/chrome-dir/chrome
 
 # Lambda writable paths configuration
 # Lambda only allows writes to /tmp (512MB ephemeral storage)
