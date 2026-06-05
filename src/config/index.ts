@@ -13,7 +13,7 @@ export const config = {
   chrome: {
     dir: process.env.CHROME_DIR || "/var/task/.chrome",
     downloadTimeout: parseIntEnv("CHROME_DOWNLOAD_TIMEOUT", 120_000),
-    mode: "chrome-for-testing" as const,
+    mode: "headless-shell" as const,
   },
 
   render: {

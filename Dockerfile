@@ -65,13 +65,14 @@ RUN npm ci --prefer-offline --no-audit --no-fund
 COPY src/ ./src/
 RUN npx tsc --noEmit && npx tsc
 
-# Remotion downloads Chrome to node_modules/.remotion/chrome-for-testing/linux64/chrome-linux64/
-# Copy it out to /var/task/.chrome/ so the runtime stage can import it independently.
-# The runtime stage symlinks node_modules/.remotion → /tmp, which would otherwise lose Chrome.
+# headless-shell is the correct binary for server-side rendering (chrome-for-testing
+# removed old --headless support in newer versions).
+# Copy the entire directory out of node_modules/.remotion before the runtime stage
+# symlinks that path to /tmp, which would otherwise lose the binary.
 RUN node dist/download-chrome.js && \
     mkdir -p /var/task/.chrome && \
-    cp -r /var/task/node_modules/.remotion/chrome-for-testing/linux64/chrome-linux64 /var/task/.chrome/ && \
-    chmod +x /var/task/.chrome/chrome-linux64/chrome
+    cp -r /var/task/node_modules/.remotion/chrome-headless-shell/linux64/chrome-headless-shell-linux64 /var/task/.chrome/ && \
+    chmod +x /var/task/.chrome/chrome-headless-shell-linux64/chrome-headless-shell
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Stage 4: Production Runtime
@@ -89,13 +90,13 @@ COPY src/ ./src/
 # Chrome — full directory with all support files (icudtl.dat etc.)
 COPY --from=builder /var/task/.chrome ./.chrome
 
-RUN test -x /var/task/.chrome/chrome-linux64/chrome || \
-    (echo "ERROR: Chrome binary missing" && exit 1)
+RUN test -x /var/task/.chrome/chrome-headless-shell-linux64/chrome-headless-shell || \
+    (echo "ERROR: chrome-headless-shell binary missing" && exit 1)
 
 # Pre-chmod all Remotion binaries — /var/task is read-only at Lambda runtime
 RUN find /var/task/node_modules/@remotion -type f \( -name "remotion" -o -name "ffmpeg" -o -name "ffprobe" \) -exec chmod +x {} \;
 
-ENV PUPPETEER_EXECUTABLE_PATH=/var/task/.chrome/chrome-linux64/chrome
+ENV PUPPETEER_EXECUTABLE_PATH=/var/task/.chrome/chrome-headless-shell-linux64/chrome-headless-shell
 
 ENV XDG_CACHE_HOME=/tmp/.cache
 ENV npm_config_cache=/tmp/.npm
