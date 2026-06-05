@@ -110,9 +110,15 @@ const getBundleLocation = async (): Promise<string> => {
         return rule;
       });
 
+      // Allow extensionless imports inside the package (e.g. './registerFonts' instead of './registerFonts.js')
+      const fullySpecifiedRule = {
+        include: /node_modules\/@evatrilvideo\/ai-video-package/,
+        resolve: { fullySpecified: false },
+      };
+
       return {
         ...currentConfiguration,
-        module: { ...currentConfiguration.module, rules: updatedRules },
+        module: { ...currentConfiguration.module, rules: [...updatedRules, fullySpecifiedRule] },
         resolve: {
           ...currentConfiguration.resolve,
           extensionAlias: {
@@ -121,7 +127,6 @@ const getBundleLocation = async (): Promise<string> => {
             ".jsx": [".tsx", ".ts", ".jsx"],
           },
           // Disable exports field enforcement so Root.tsx can import package subpaths
-          // (e.g. @evatrilvideo/ai-video-package/src/fonts) — safe inside the webpack bundle
           exportsFields: [],
         },
       };
