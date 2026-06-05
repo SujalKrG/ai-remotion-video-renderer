@@ -1,0 +1,41 @@
+{
+  "name": "ai-video-renderer",
+  "version": "1.0.0",
+  "description": "AWS Lambda container — renders invitation videos via Remotion and uploads to S3",
+  "main": "dist/lambda.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "download-chrome": "node dist/download-chrome.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "docker:build": "docker build -t ai-video-renderer:latest .",
+    "docker:test": "docker run -p 9000:8080 --env-file .env ai-video-renderer:latest",
+    "docker:clean": "docker system prune -f && docker volume prune -f"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.600.0",
+    "@aws-sdk/s3-request-presigner": "^3.600.0",
+    "@evatrilvideo/ai-video-package": "^1.0.2",
+    "@remotion/bundler": "4.0.290",
+    "@remotion/renderer": "4.0.290",
+    "@smithy/node-http-handler": "^4.4.10",
+    "axios": "^1.7.2",
+    "pino": "^9.2.0",
+    "remotion": "4.0.290",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.14.9",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.2",
+    "typescript": "^5.5.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

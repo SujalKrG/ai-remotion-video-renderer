@@ -1,0 +1,93 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# Docker Build Context Exclusions
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Dependencies (will be installed in container) ──
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json.bak
+
+# ── Build artifacts (will be generated in container) ──
+dist
+build
+*.tsbuildinfo
+
+# ── Environment & secrets ──
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+secrets/
+
+# ── Git & version control ──
+.git
+.gitignore
+.gitattributes
+.github
+.husky
+
+# ── IDE & editor files ──
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Testing ──
+coverage
+.nyc_output
+*.test.ts
+*.spec.ts
+__tests__
+__mocks__
+
+# ── Documentation ──
+*.md
+!README.md
+docs/
+LICENSE
+
+# ── Logs & runtime ──
+*.log
+logs
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# ── Temporary files ──
+tmp/
+temp/
+.tmp/
+*.tmp
+
+# ── CI/CD ──
+.circleci
+.travis.yml
+.gitlab-ci.yml
+azure-pipelines.yml
+
+# ── Local development ──
+.cache
+.remotion
+.webpack
+.parcel-cache
+
+# ── Docker files (not needed inside image) ──
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+
+# ── Chrome (will be downloaded during build) ──
+.chrome/
+
+# ── Misc ──
+*.bak
+*.backup
+*.old

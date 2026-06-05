@@ -1,0 +1,24 @@
+{
+  "render_type": "static_slot",
+  "correlation_id": "test-static-001",
+  "idempotency_key": "test-static-key-001",
+  "order_uuid": "test-order-uuid-123",
+  "slot": {
+    "slot_no": 1,
+    "purpose": "cinematic_intro",
+    "duration_seconds": 4,
+    "video_frame": {
+      "id": 1,
+      "component_name": "CinematicIntroFrame",
+      "config": {
+        "backgroundColor": "#000000",
+        "textColor": "#ffffff"
+      },
+      "variables": {
+        "title": "Welcome",
+        "subtitle": "To Our Event"
+      }
+    }
+  },
+  "inputs": {}
+}
