@@ -46,6 +46,8 @@ const findBrowserExecutable = (): string | null => {
     return process.env.PUPPETEER_EXECUTABLE_PATH;
   }
   const candidates = [
+    "/var/task/.chrome/bin/chrome",
+    "/var/task/.chrome/chrome-for-testing/chrome-linux64/chrome",
     "/var/task/.chrome/chrome-for-testing/chrome-linux/chrome",
     "/usr/bin/chromium-browser",
     "/usr/bin/chromium",

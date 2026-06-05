@@ -89,13 +89,15 @@ COPY src/ ./src/
 RUN npx tsc --noEmit && npx tsc
 
 # Download Chrome at build time so it's baked into the image
-# This is a critical optimization - Chrome is ~150MB and downloading during
-# Lambda cold start would add 30-60s latency
 RUN node dist/download-chrome.js
 
-# Verify Chrome was downloaded successfully
-RUN test -f /var/task/.chrome/chrome-for-testing/chrome-linux/chrome || \
-    (echo "ERROR: Chrome download failed" && exit 1)
+# Locate the binary (path varies by Chrome for Testing version: chrome-linux vs chrome-linux64)
+# and create a stable symlink so PUPPETEER_EXECUTABLE_PATH never needs updating
+RUN CHROME_BIN=$(find /var/task/.chrome -name "chrome" -type f | head -1) && \
+    test -n "$CHROME_BIN" || (echo "ERROR: Chrome binary not found" && exit 1) && \
+    echo "Chrome found at: $CHROME_BIN" && \
+    mkdir -p /var/task/.chrome/bin && \
+    ln -sf "$CHROME_BIN" /var/task/.chrome/bin/chrome
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Stage 4: Production Runtime
@@ -121,12 +123,11 @@ COPY src/ ./src/
 # Copy downloaded Chrome from builder (cached layer)
 COPY --from=builder /var/task/.chrome ./.chrome
 
-# Verify Chrome executable exists and is functional
-RUN test -x /var/task/.chrome/chrome-for-testing/chrome-linux/chrome || \
+# Verify Chrome symlink from builder stage is present and executable
+RUN test -x /var/task/.chrome/bin/chrome || \
     (echo "ERROR: Chrome binary not executable" && exit 1)
 
-# Set Chrome executable path for Puppeteer/Remotion
-ENV PUPPETEER_EXECUTABLE_PATH=/var/task/.chrome/chrome-for-testing/chrome-linux/chrome
+ENV PUPPETEER_EXECUTABLE_PATH=/var/task/.chrome/bin/chrome
 
 # Lambda writable paths configuration
 # Lambda only allows writes to /tmp (512MB ephemeral storage)
