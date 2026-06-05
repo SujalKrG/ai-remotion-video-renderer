@@ -92,8 +92,8 @@ COPY --from=builder /var/task/.chrome ./.chrome
 RUN test -x /var/task/.chrome/chrome-linux64/chrome || \
     (echo "ERROR: Chrome binary missing" && exit 1)
 
-# Pre-chmod Remotion compositor — /var/task is read-only at Lambda runtime
-RUN find /var/task/node_modules/@remotion -name "remotion" -type f -exec chmod +x {} \;
+# Pre-chmod all Remotion binaries — /var/task is read-only at Lambda runtime
+RUN find /var/task/node_modules/@remotion -type f \( -name "remotion" -o -name "ffmpeg" -o -name "ffprobe" \) -exec chmod +x {} \;
 
 ENV PUPPETEER_EXECUTABLE_PATH=/var/task/.chrome/chrome-linux64/chrome
 
