@@ -8,6 +8,7 @@
     "build": "tsc",
     "type-check": "tsc --noEmit",
     "download-chrome": "node dist/download-chrome.js",
+    "download-fonts": "node dist/download-fonts.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "docker:build": "docker build -t ai-video-renderer:latest .",
@@ -17,7 +18,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.600.0",
     "@aws-sdk/s3-request-presigner": "^3.600.0",
-    "@evatrilvideo/ai-video-package": "^1.0.2",
+    "@evatrilvideo/ai-video-package": "^1.0.3",
     "@remotion/bundler": "4.0.290",
     "@remotion/renderer": "4.0.290",
     "@smithy/node-http-handler": "^4.4.10",

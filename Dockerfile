@@ -74,6 +74,10 @@ RUN node dist/download-chrome.js && \
     cp -r /var/task/node_modules/.remotion/chrome-headless-shell/linux64/chrome-headless-shell-linux64 /var/task/.chrome/ && \
     chmod +x /var/task/.chrome/chrome-headless-shell-linux64/chrome-headless-shell
 
+# Pre-download all fonts into public/fonts/ so renders never fetch from S3.
+# Files land at /fonts/<name>.ttf in the Remotion bundle's static asset server.
+RUN node dist/download-fonts.js
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Stage 4: Production Runtime
 # ──────────────────────────────────────────────────────────────────────────────
@@ -86,6 +90,9 @@ RUN npm ci --omit=dev --prefer-offline --no-audit --no-fund
 
 COPY --from=builder /var/task/dist ./dist
 COPY src/ ./src/
+
+# Fonts pre-downloaded at build time — served as static assets by Remotion's bundle server
+COPY --from=builder /var/task/public ./public
 
 # Chrome — full directory with all support files (icudtl.dat etc.)
 COPY --from=builder /var/task/.chrome ./.chrome

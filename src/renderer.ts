@@ -113,11 +113,22 @@ const getBundleLocation = async (): Promise<string> => {
         resolve: { fullySpecified: false },
       };
 
+      // Redirect the package's S3-fetching registerFonts to our local version that
+      // serves fonts from the pre-baked public/fonts/ directory in the bundle.
+      const localRegisterFonts = path.resolve(
+        __dirname,
+        "../src/remotion/localRegisterFonts.ts",
+      );
+
       return {
         ...currentConfiguration,
         module: { ...currentConfiguration.module, rules: [...updatedRules, fullySpecifiedRule] },
         resolve: {
           ...currentConfiguration.resolve,
+          alias: {
+            ...((currentConfiguration.resolve as any)?.alias ?? {}),
+            "@evatrilvideo/ai-video-package/src/fonts/registerFonts.js": localRegisterFonts,
+          },
           extensionAlias: {
             ...((currentConfiguration.resolve as any)?.extensionAlias ?? {}),
             ".js": [".tsx", ".ts", ".js"],
