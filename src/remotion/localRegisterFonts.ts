@@ -1,3 +1,5 @@
+import { staticFile } from "remotion";
+
 let registered = false;
 let loadingPromise: Promise<void> | null = null;
 
@@ -5,28 +7,29 @@ const FONT_TIMEOUT_MS = 10000;
 
 interface FontDef {
   family: string;
-  url: string;
+  file: string;
   weight: string;
   style?: string;
   unicodeRange?: string;
 }
 
 // All fonts are served locally from the bundle's public/fonts/ directory,
-// pre-downloaded at Docker build time. No S3 round-trips during rendering.
+// pre-downloaded at Docker build time. staticFile() resolves to the correct
+// /public/fonts/... path that Remotion's bundle server actually serves.
 const fonts: FontDef[] = [
   {
     family: "Great Vibes",
-    url: "/fonts/GreatVibes-Regular.ttf",
+    file: "fonts/GreatVibes-Regular.ttf",
     weight: "400",
   },
   {
     family: "Dancing Script",
-    url: "/fonts/DancingScript-VariableFont_wght.ttf",
+    file: "fonts/DancingScript-VariableFont_wght.ttf",
     weight: "100 700",
   },
   {
     family: "Italic Playfair Display",
-    url: "/fonts/PlayfairDisplay-Italic-VariableFont_wght.ttf",
+    file: "fonts/PlayfairDisplay-Italic-VariableFont_wght.ttf",
     weight: "100 900",
     style: "italic",
   },
@@ -37,28 +40,28 @@ const fonts: FontDef[] = [
   // the tofu blocks without modifying frame components.
   {
     family: "Dancing Script",
-    url: "/fonts/NotoSansDevanagari-VariableFont.ttf",
+    file: "fonts/NotoSansDevanagari-VariableFont.ttf",
     weight: "100 900",
     unicodeRange: "U+0900-097F, U+1CD0-1CFF, U+20A8, U+A8E0-A8FF",
   },
   {
     family: "Noto Naskh Arabic",
-    url: "/fonts/NotoNaskhArabic-VariableFont_wght.ttf",
+    file: "fonts/NotoNaskhArabic-VariableFont_wght.ttf",
     weight: "100 900",
   },
   {
     family: "Noto Serif Oriya",
-    url: "/fonts/NotoSerifOriya-VariableFont_wght.ttf",
+    file: "fonts/NotoSerifOriya-VariableFont_wght.ttf",
     weight: "100 900",
   },
   {
     family: "Noto Serif Kannada",
-    url: "/fonts/NotoSerifKannada-VariableFont_wght.ttf",
+    file: "fonts/NotoSerifKannada-VariableFont_wght.ttf",
     weight: "100 900",
   },
   {
     family: "Noto Sans Gurmukhi",
-    url: "/fonts/NotoSerifGurmukhi-VariableFont_wght.ttf",
+    file: "fonts/NotoSerifGurmukhi-VariableFont_wght.ttf",
     weight: "100 900",
   },
 ];
@@ -89,7 +92,7 @@ export const registerFonts = async (): Promise<void> => {
 
       const face = new FontFace(
         font.family,
-        `url('${font.url}') format('truetype')`,
+        `url('${staticFile(font.file)}') format('truetype')`,
         descriptors,
       );
       await withTimeout(face.load(), FONT_TIMEOUT_MS, font.family);
