@@ -268,6 +268,105 @@ describe("FinalMergeRequestSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("validates full music render contract if present", () => {
+    const requestWithMusic = {
+      render_type: "final_merge",
+      order_uuid: "order-123",
+      render_plan: {
+        version: 1,
+        fps: 30,
+        music: {
+          music_library_id: 77,
+          source: "music_library",
+          url: "https://s3.amazonaws.com/bucket/music.mp3",
+          duration_seconds: 180,
+          start_seconds: 12,
+          end_seconds: 47,
+          volume: 0.4,
+          fade_in_seconds: 1,
+          fade_out_seconds: 2,
+          loop: true,
+        },
+        timeline: [
+          {
+            slot_no: 1,
+            slot_type: "static",
+            clip_url: "https://s3.amazonaws.com/bucket/clip1.mp4",
+            duration_seconds: 5,
+          },
+        ],
+      },
+    };
+
+    const result = FinalMergeRequestSchema.safeParse(requestWithMusic);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.render_plan.music?.end_seconds).toBe(47);
+      expect(result.data.render_plan.music?.loop).toBe(true);
+    }
+  });
+
+  it("accepts custom-upload music with null library id", () => {
+    const requestWithMusic = {
+      render_type: "final_merge",
+      order_uuid: "order-123",
+      render_plan: {
+        version: 1,
+        fps: 30,
+        music: {
+          music_library_id: null,
+          source: "custom_upload",
+          url: "https://s3.amazonaws.com/bucket/custom.mp3",
+          duration_seconds: 120,
+          start_seconds: 0,
+          end_seconds: null,
+          volume: 0.4,
+          fade_in_seconds: 1,
+          fade_out_seconds: 2,
+          loop: true,
+        },
+        timeline: [
+          {
+            slot_no: 1,
+            slot_type: "static",
+            clip_url: "https://s3.amazonaws.com/bucket/clip1.mp4",
+            duration_seconds: 5,
+          },
+        ],
+      },
+    };
+
+    const result = FinalMergeRequestSchema.safeParse(requestWithMusic);
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects music trim window when end is before start", () => {
+    const invalidRequest = {
+      render_type: "final_merge",
+      order_uuid: "order-123",
+      render_plan: {
+        version: 1,
+        fps: 30,
+        music: {
+          url: "https://s3.amazonaws.com/bucket/music.mp3",
+          start_seconds: 12,
+          end_seconds: 10,
+        },
+        timeline: [
+          {
+            slot_no: 1,
+            slot_type: "static",
+            clip_url: "https://s3.amazonaws.com/bucket/clip1.mp4",
+            duration_seconds: 5,
+          },
+        ],
+      },
+    };
+
+    const result = FinalMergeRequestSchema.safeParse(invalidRequest);
+    expect(result.success).toBe(false);
+  });
+
   it("rejects invalid music URL", () => {
     const invalidRequest = {
       render_type: "final_merge",

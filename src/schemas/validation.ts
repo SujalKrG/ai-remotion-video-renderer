@@ -30,9 +30,27 @@ export const TimelineItemSchema = z.object({
 // ── Music Schema ───────────────────────────────────────────────────────────────
 
 export const MusicSchema = z.object({
-  music_library_id: z.number().optional(),
+  music_library_id: z.number().nullable().optional(),
+  source: z.enum(["music_library", "custom_upload"]).optional(),
   url: z.string().url("music URL must be valid"),
   duration_seconds: z.number().positive().optional(),
+  start_seconds: z.number().min(0).optional(),
+  end_seconds: z.number().positive().nullable().optional(),
+  volume: z.number().min(0).max(1).optional(),
+  fade_in_seconds: z.number().min(0).optional(),
+  fade_out_seconds: z.number().min(0).optional(),
+  loop: z.boolean().optional(),
+}).superRefine((music, ctx) => {
+  if (
+    music.end_seconds != null &&
+    music.end_seconds <= (music.start_seconds ?? 0)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["end_seconds"],
+      message: "end_seconds must be greater than start_seconds",
+    });
+  }
 });
 
 // ── Render Plan Schema ─────────────────────────────────────────────────────────

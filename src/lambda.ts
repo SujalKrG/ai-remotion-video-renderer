@@ -207,7 +207,16 @@ export const handler = async (event: LambdaEvent): Promise<LambdaResponse> => {
       }));
 
     const music = renderPlan.music
-      ? { url: renderPlan.music.url, volume: 0.5 }
+      ? {
+          url: renderPlan.music.url,
+          durationSeconds: renderPlan.music.duration_seconds,
+          startSeconds: renderPlan.music.start_seconds ?? 0,
+          endSeconds: renderPlan.music.end_seconds ?? null,
+          volume: renderPlan.music.volume ?? 0.4,
+          fadeInSeconds: renderPlan.music.fade_in_seconds ?? 1,
+          fadeOutSeconds: renderPlan.music.fade_out_seconds ?? 2,
+          loop: renderPlan.music.loop ?? true,
+        }
       : undefined;
 
     const inputProps: Record<string, unknown> = { clips, music };
