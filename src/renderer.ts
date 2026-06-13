@@ -150,10 +150,12 @@ export const renderVideo = async ({
   payload,
   outputLocation,
   logLevel = "warn" as const,
+  timeoutMs,
 }: {
   payload: { props: Record<string, unknown>; composition?: string };
   outputLocation: string;
   logLevel?: "info" | "warn" | "error" | "verbose";
+  timeoutMs?: number;
 }) => {
   const compositionId = payload.composition ?? config.render.defaultComposition;
   const inputProps = payload.props;
@@ -194,10 +196,11 @@ export const renderVideo = async ({
   logger.info({ composition: compositionId, totalFrames }, "Preparing render");
 
   const { cancelSignal, cancel } = makeCancelSignal();
+  const hardTimeoutMs = timeoutMs ?? config.render.hardTimeout;
   const hardTimeout = setTimeout(() => {
-    logger.warn({ hardTimeoutMs: config.render.hardTimeout }, "Hard timeout reached — cancelling render");
+    logger.warn({ hardTimeoutMs }, "Hard timeout reached — cancelling render");
     cancel();
-  }, config.render.hardTimeout);
+  }, hardTimeoutMs);
 
   let lastMilestone = -1;
 

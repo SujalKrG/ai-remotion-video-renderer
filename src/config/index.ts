@@ -6,7 +6,12 @@ function requireEnv(key: string): string {
 
 function parseIntEnv(key: string, fallback: number): number {
   const value = process.env[key];
-  return value ? parseInt(value, 10) : fallback;
+  if (!value) return fallback;
+  const parsed = parseInt(value, 10);
+  if (Number.isNaN(parsed)) {
+    throw new Error(`Environment variable ${key} must be a valid integer, got: "${value}"`);
+  }
+  return parsed;
 }
 
 export const config = {
@@ -25,7 +30,7 @@ export const config = {
   },
 
   s3: {
-    bucket: process.env.AWS_BUCKET || "",
+    bucket: process.env.AWS_BUCKET || process.env.S3_BUCKET || "",
     region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "ap-south-1",
     signedUrlExpiry: parseIntEnv("S3_SIGNED_URL_EXPIRY", 86_400),
   },

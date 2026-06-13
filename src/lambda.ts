@@ -61,11 +61,22 @@ async function deliverCallbackSafely(
 
 // ── Handler ────────────────────────────────────────────────────────────────────
 
-export const handler = async (event: LambdaEvent): Promise<LambdaResponse> => {
+type LambdaContext = { getRemainingTimeInMillis: () => number };
+
+// Derives a hard timeout that fires before Lambda kills the process,
+// leaving ~30s for S3 upload, callback, and /tmp cleanup.
+function deriveRenderTimeout(context: LambdaContext | undefined): number {
+  if (!context) return config.render.hardTimeout;
+  const remaining = context.getRemainingTimeInMillis();
+  return Math.max(remaining - 30_000, 30_000);
+}
+
+export const handler = async (event: LambdaEvent, context?: LambdaContext): Promise<LambdaResponse> => {
   // Ensure writable cache dirs exist on cold start
   fs.mkdirSync(config.paths.remotionCache, { recursive: true });
   fs.mkdirSync(config.paths.cache, { recursive: true });
 
+  const renderTimeoutMs = deriveRenderTimeout(context);
   const renderType = (event as Record<string, unknown>).render_type as string | undefined;
 
   // ── static_slot ─────────────────────────────────────────────────────────────
@@ -114,6 +125,7 @@ export const handler = async (event: LambdaEvent): Promise<LambdaResponse> => {
       await renderVideo({
         payload: { props: inputProps, composition: "StaticSlot" },
         outputLocation: localVideoPath,
+        timeoutMs: renderTimeoutMs,
       });
 
       await renderThumbnail({
@@ -234,6 +246,7 @@ export const handler = async (event: LambdaEvent): Promise<LambdaResponse> => {
       await renderVideo({
         payload: { props: inputProps, composition: "MergeComposition" },
         outputLocation: localVideoPath,
+        timeoutMs: renderTimeoutMs,
       });
 
       await renderThumbnail({
