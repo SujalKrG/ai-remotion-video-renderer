@@ -88,10 +88,15 @@ WORKDIR /var/task
 COPY package*.json ./
 RUN npm ci --omit=dev --prefer-offline --no-audit --no-fund
 
-# npm skips @remotion/compositor-linux-x64-musl on glibc hosts (libc:musl gate).
-# Install it explicitly so the renderer can force it at runtime to avoid the
-# GLIBC_2.35 requirement of the gnu compositor on Amazon Linux 2023 (glibc 2.34).
-RUN npm install --no-save --force --no-audit --no-fund @remotion/compositor-linux-x64-musl@4.0.290
+# The gnu compositor binary requires GLIBC_2.35 but AL2023 ships glibc 2.34.
+# The musl compositor is statically linked and has no glibc dependency.
+# Install it with --force (bypasses the libc:musl platform gate), replace the
+# gnu compositor binary in-place, then remove the musl package — ffmpeg and
+# ffprobe from the gnu package work fine on AL2023 so they stay untouched.
+RUN npm install --no-save --force --no-audit --no-fund @remotion/compositor-linux-x64-musl@4.0.290 && \
+    cp /var/task/node_modules/@remotion/compositor-linux-x64-musl/remotion \
+       /var/task/node_modules/@remotion/compositor-linux-x64-gnu/remotion && \
+    rm -rf /var/task/node_modules/@remotion/compositor-linux-x64-musl
 
 COPY --from=builder /var/task/dist ./dist
 COPY src/ ./src/
@@ -108,10 +113,10 @@ RUN test -x /var/task/.chrome/chrome-headless-shell-linux64/chrome-headless-shel
 # Pre-chmod all Remotion binaries — /var/task is read-only at Lambda runtime
 RUN find /var/task/node_modules/@remotion -type f \( -name "remotion" -o -name "ffmpeg" -o -name "ffprobe" \) -exec chmod +x {} \;
 
-# Fail the build if the musl compositor is missing — it's required on AL2023 (glibc 2.34)
-# because the gnu compositor needs GLIBC_2.35 which AL2023 does not provide.
-RUN test -x /var/task/node_modules/@remotion/compositor-linux-x64-musl/remotion || \
-    (echo "ERROR: @remotion/compositor-linux-x64-musl binary missing or not executable" && exit 1)
+# Verify the gnu compositor slot now holds the musl binary (statically linked,
+# no GLIBC_2.35 dependency). ffmpeg/ffprobe remain from the gnu package.
+RUN test -x /var/task/node_modules/@remotion/compositor-linux-x64-gnu/remotion || \
+    (echo "ERROR: compositor binary missing after musl replacement" && exit 1)
 
 ENV PUPPETEER_EXECUTABLE_PATH=/var/task/.chrome/chrome-headless-shell-linux64/chrome-headless-shell
 

@@ -17,18 +17,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const require = createRequire(import.meta.url);
 
-// On Amazon Linux 2023 (glibc 2.34), Remotion's gnu compositor fails with
-// GLIBC_2.35 not found. Force the musl binary which is statically linked and
-// has no glibc dependency. Only applies on linux/x64 (the Lambda runtime).
-const getBinariesDirectory = (): string | undefined => {
-  if (process.platform !== "linux" || process.arch !== "x64") return undefined;
-  try {
-    return require("@remotion/compositor-linux-x64-musl").dir;
-  } catch {
-    return undefined;
-  }
-};
-
 // ── Composition duration computation ──────────────────────────────────────────
 
 const computeCompositionDuration = (
@@ -230,7 +218,6 @@ export const renderVideo = async ({
       concurrency: config.render.concurrency,
       crf: config.render.crf,
       timeoutInMilliseconds: config.render.frameTimeout,
-      binariesDirectory: getBinariesDirectory(),
       chromiumOptions: {
         headless: true,
         enableMultiProcessOnLinux: false,
