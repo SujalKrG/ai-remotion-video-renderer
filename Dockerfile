@@ -188,7 +188,11 @@ ENV PUPPETEER_EXECUTABLE_PATH=/var/task/.chrome/chrome-headless-shell-linux64/ch
     HOME=/tmp \
     FONTCONFIG_PATH=/etc/fonts \
     FONTCONFIG_FILE=/etc/fonts/fonts.conf \
-    NODE_OPTIONS="--max-old-space-size=3008 --enable-source-maps" \
+    # Cap Node.js heap at 1.5 GB, leaving the remainder of the Lambda's memory
+    # allocation for Chrome's process space. Setting this equal to the Lambda's
+    # total memory leaves Chrome with zero headroom and causes OOM during
+    # MergeComposition, which requires Chrome to decode multiple video streams.
+    NODE_OPTIONS="--max-old-space-size=1536 --enable-source-maps" \
     REMOTION_GL=swiftshader \
     REMOTION_DISABLE_FAST_BUILD=false
 
