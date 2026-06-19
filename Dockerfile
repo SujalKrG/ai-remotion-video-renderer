@@ -16,6 +16,8 @@
 
 ARG NODE_VERSION=22
 ARG DEBIAN_CODENAME=bookworm
+# Suppress debconf interactive prompts during apt-get — Docker builds have no TTY
+ARG DEBIAN_FRONTEND=noninteractive
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Stage 1: deps
@@ -24,6 +26,8 @@ ARG DEBIAN_CODENAME=bookworm
 # tools are installed here and never appear in the runtime image.
 # ──────────────────────────────────────────────────────────────────────────────
 FROM node:${NODE_VERSION}-${DEBIAN_CODENAME} AS deps
+
+ARG DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /var/task
 
@@ -47,7 +51,21 @@ RUN --mount=type=cache,target=/root/.npm \
 # ──────────────────────────────────────────────────────────────────────────────
 FROM node:${NODE_VERSION}-${DEBIAN_CODENAME} AS builder
 
+# Re-declare so the ARG is visible within this stage
+ARG DEBIAN_FRONTEND=noninteractive
+
 WORKDIR /var/task
+
+# aws-lambda-ric runs a cmake-based preinstall script for its native C++ addon.
+# It fires during any npm ci that includes the package, so the toolchain must
+# be present here as well as in the deps stage.
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    g++ \
+    make \
+    cmake \
+    libcurl4-openssl-dev
 
 COPY package*.json tsconfig.json ./
 
@@ -76,6 +94,8 @@ RUN node dist/download-fonts.js
 # the deps stage. Chrome runtime libs and system fonts are installed via apt.
 # ──────────────────────────────────────────────────────────────────────────────
 FROM node:${NODE_VERSION}-${DEBIAN_CODENAME}-slim AS runtime
+
+ARG DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /var/task
 
