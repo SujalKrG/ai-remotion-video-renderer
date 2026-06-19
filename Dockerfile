@@ -103,6 +103,11 @@ RUN test -x /var/task/.chrome/chrome-headless-shell-linux64/chrome-headless-shel
 # Pre-chmod all Remotion binaries — /var/task is read-only at Lambda runtime
 RUN find /var/task/node_modules/@remotion -type f \( -name "remotion" -o -name "ffmpeg" -o -name "ffprobe" \) -exec chmod +x {} \;
 
+# Fail the build if the musl compositor is missing — it's required on AL2023 (glibc 2.34)
+# because the gnu compositor needs GLIBC_2.35 which AL2023 does not provide.
+RUN test -x /var/task/node_modules/@remotion/compositor-linux-x64-musl/remotion || \
+    (echo "ERROR: @remotion/compositor-linux-x64-musl binary missing or not executable" && exit 1)
+
 ENV PUPPETEER_EXECUTABLE_PATH=/var/task/.chrome/chrome-headless-shell-linux64/chrome-headless-shell
 
 ENV XDG_CACHE_HOME=/tmp/.cache
