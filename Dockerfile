@@ -88,6 +88,11 @@ WORKDIR /var/task
 COPY package*.json ./
 RUN npm ci --omit=dev --prefer-offline --no-audit --no-fund
 
+# npm skips @remotion/compositor-linux-x64-musl on glibc hosts (libc:musl gate).
+# Install it explicitly so the renderer can force it at runtime to avoid the
+# GLIBC_2.35 requirement of the gnu compositor on Amazon Linux 2023 (glibc 2.34).
+RUN npm install --no-save --force --no-audit --no-fund @remotion/compositor-linux-x64-musl@4.0.290
+
 COPY --from=builder /var/task/dist ./dist
 COPY src/ ./src/
 
