@@ -32,7 +32,18 @@ const computeCompositionDuration = (
   if (compositionId === "MergeComposition") {
     const clips = props.clips as Array<{ durationInFrames: number }> | undefined;
     if (!Array.isArray(clips) || clips.length === 0) return 0;
-    return clips.reduce((sum, c) => sum + (c.durationInFrames ?? 0), 0);
+    // Mirror MergeComposition's crossfade overlap so the rendered
+    // duration matches where clips actually stop, not the pre-overlap sum
+    // (otherwise the render ends in trailing blank frames).
+    const transitionSeconds = (props.transitionSeconds as number) ?? 0.4;
+    const transitionFrames = Math.max(0, Math.round(transitionSeconds * fps));
+    return clips.reduce((sum, c, index) => {
+      const overlap =
+        index === 0
+          ? 0
+          : Math.min(transitionFrames, c.durationInFrames, clips[index - 1].durationInFrames);
+      return sum - overlap + (c.durationInFrames ?? 0);
+    }, 0);
   }
 
   logger.warn({ compositionId }, "Unknown compositionId — using composition default duration");
