@@ -18,7 +18,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.600.0",
     "@aws-sdk/s3-request-presigner": "^3.600.0",
-    "@evatrilvideo/ai-video-package": "^1.0.5",
+    "@evatrilvideo/ai-video-package": "^1.0.6",
     "@remotion/bundler": "4.0.290",
     "@remotion/renderer": "4.0.290",
     "@smithy/node-http-handler": "^4.4.10",
