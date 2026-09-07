@@ -32,7 +32,11 @@ export const config = {
   s3: {
     bucket: process.env.AWS_BUCKET || process.env.S3_BUCKET || "",
     region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "ap-south-1",
-    signedUrlExpiry: parseIntEnv("S3_SIGNED_URL_EXPIRY", 86_400),
+    // 7 days -- AWS's max for IAM-user static credentials. 24h (the old
+    // default) expired before a merge Lambda call could reuse an earlier
+    // static slot's clip_url as a render-plan input, and before customers
+    // on a multi-day order flow ever viewed their video.
+    signedUrlExpiry: parseIntEnv("S3_SIGNED_URL_EXPIRY", 604_800),
   },
 
   paths: {
